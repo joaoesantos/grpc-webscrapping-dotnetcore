@@ -1,0 +1,44 @@
+﻿syntax = "proto3";
+import "google/protobuf/empty.proto";
+
+option csharp_namespace = "GrpcWebScrappingService";
+
+service ScrappingServiceGrpc {
+  rpc ListScrappers(google.protobuf.Empty) returns (stream Scrapper);
+  rpc SubscribeToScrapper(SubscribeScrapperRequest) returns (SubscribeResponse);
+  rpc ListenToSubscription(ListenRequest) returns (stream ListenResponse);
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
+}
+
+message Scrapper {
+  int64 Id = 1;
+  string name = 2;
+}
+
+message SubscribeScrapperRequest {
+  int64 ScrapperId = 1;
+  string Username = 2;
+}
+
+message SubscribeResponse {
+  int64 SubscriptionId = 3;
+}
+
+message ListenRequest {
+  int64 SubscriptionId = 1;
+  int64 LastMessageId = 2;
+}
+
+message ListenResponse {
+  int64 MessageId = 1;
+  string Name = 2;
+  string Data = 3;
+}
+
+message CreateAccountRequest {
+  string Username = 1;
+}
+
+message CreateAccountResponse {
+  int64 UserId = 1;
+}
