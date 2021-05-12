@@ -21,19 +21,16 @@ namespace GrpcWebScrappingService.Services
             _listenersList = new ConcurrentDictionary<long, ScrappingDataStreamObserver>();
         }
         
-        public override Task ListScrappers(Empty request, IServerStreamWriter<Scrapper> responseStream, ServerCallContext context)
+        public override async Task ListScrappers(Empty request, IServerStreamWriter<Scrapper> responseStream, ServerCallContext context)
         {
-            Console.WriteLine("A request");
-            responseStream.WriteAsync(new Scrapper() {Id = 1, Name = "This is a test"});
-            /*using (WebScrapperDbContext dbContext = new WebScrappingContextFactory().CreateDbContext(Array.Empty<string>()))
+            using (WebScrapperDbContext dbContext = new WebScrappingContextFactory().CreateDbContext(Array.Empty<string>()))
             {
-                dbContext
+                await dbContext
                     .WebScrappingSearches
-                    .ForEachAsync(search => responseStream
+                    .ForEachAsync(async search =>  await responseStream
                         .WriteAsync(new Scrapper{Id = search.Id, Name = search.Url})
                     );
-            }*/
-            return Task.CompletedTask;
+            }
         }
 
         public override async Task<SubscribeResponse> SubscribeToScrapper(SubscribeScrapperRequest request, ServerCallContext context)

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using ConsoleApp;
 using GrpcWebScrappingService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -28,20 +30,45 @@ namespace GrpcWebScrappingService
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseRouting();
+            var appBootstrapper = new AppBootstrapper();
+            appBootstrapper.Bootstrap();
 
-            app.UseEndpoints(endpoints =>
+            if (appBootstrapper.WasInitialised)
             {
-                endpoints.MapGrpcService<GreeterService>();
-                endpoints.MapGrpcService<ScrappingService>();
-
-                endpoints.MapGet("/",
-                    async context =>
+                foreach (var scrapper in appBootstrapper.Scrappers)
+                {
+                    Thread thread = new Thread(scrapper.Run);
+                    thread.Start();
+                }
+                
+                new Thread(
+                    () =>
                     {
-                        await context.Response.WriteAsync(
-                            "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+                        while (true)
+                        {
+                            appBootstrapper.DataProcessor.Process();
+                        }
                     });
-            });
+                
+                app.UseRouting();
+
+                app.UseEndpoints(endpoints =>
+                {
+                    endpoints.MapGrpcService<GreeterService>();
+                    endpoints.MapGrpcService<ScrappingService>();
+
+                    
+                    //TODO add endpoint to share proto contract
+                    endpoints.MapGet("/",
+                        async context =>
+                        {
+                            await context.Response.WriteAsync(
+                                "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+                        });
+                });
+            }
+
+
         }
     }
 }
